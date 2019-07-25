@@ -1,5 +1,188 @@
-extends layout
+<!DOCTYPE html>
+<html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<head>
+	<title></title>
+</head>
+<body>
+<div class="selector-pais">
+     Country:
+     <select id="country"></select>
+     payment method
+     <select id="payment_methods"></select>
+     <div id=agenciesAttributes>
+	     <br>
+	     Latitude:
+	     <input type="text" id="Latitude" class="mandatory" autocomplete="off">
+	     <br>
+	     Longitude:
+	     <input type="text" id="Longitude" class="mandatory" autocomplete="off">
+	     <br>
+	     Radio:
+	     <input type="text" id="Radio" class="mandatory" autocomplete="off">
+	     <br>
+	     Limit:
+	     <input type="text" id="Limit" autocomplete="off">
+	     <br>
+	     Offset:
+	     <input type="text" id="Offset" autocomplete="off">
+	     <br>
+	     <button type="button" id="sendbutton" disabled="true">Send</button>
+     </div>
+     <table border="1" id="mitabla">
+	     <caption>Verificar</caption>
+		<thead>
+		  <tr>
+		     <th colspan="3">Registros Base de Datos</th>
+		  </tr>
+		  <tr>
+		     <!-- <td>address_line</td>	
+		     <td>city</td>	
+		     <td>country</td>
+		     <td>location</td>	
+		     <td>other_info</td>
+		     <td>state</td>	
+		     <td>zip_code</td>	 -->
+		     <td>agency_code</td>	
+		     <td>correspondent_id</td>	
+		     <td>description</td>	
+		     <td>disabled</td>	
+		     <td>distance</td>	
+		     <td>id</td>	
+		     <td>payment_method_id</td>
+		     <td>phone</td>
+		     <td>site_id</td>
+		     <td>terminal</td>
+		  </tr>
 
-block content
-  h1= title
-  p Welcome to #{title}
+		</thead>
+			<tbody id="contenido">
+				
+			</tbody>
+		</table>
+</div>
+</body>
+</html>
+ <script type="text/javascript"> 	
+ 	$( document ).ready(function() {
+  var api_url = 'http://localhost:3000/sites'
+  var key = '5b578yg9yvi8sogirbvegoiufg9v9g579gviuiub8' // not real
+  $("#agenciesAttributes").hide();
+    $.ajax({
+        url: api_url,
+        type: "GET",
+        dataType: 'json',
+        success: function(result){
+            console.log(result);
+              $.each(result,function(key, registro) {
+	    			var id = "";
+	    		    var name = "";
+	    		    
+						$.each(registro, function(key, value) {
+							//alert(campo + ": " + valor);
+							if (key == "id") { id = value; }
+							if (key == "name") { name = value; }
+														
+						});
+						              	$("#country").append('<option value='+id+'>'+name+'</option>');
+                 });
+        }
+    });
+    $("#country").change(function(){
+    	$("#agenciesAttributes").hide();
+		var selectedCountry = $("#country").children("option:selected").val();
+		console.log("http://localhost:3000/sites/"+selectedCountry+"/payment_methods");
+		$("#payment_methods").val("");   
+		$.ajax({
+        url: "http://localhost:3000/sites/"+selectedCountry+"/payment_methods",
+        type: "GET",
+        dataType: 'json',
+        success: function(result){
+            console.log(result);
+              $.each(result,function(key, registro) {
+	    			var id = "";
+	    		    var name = "";
+	    		    
+						$.each(registro, function(key, value) {
+							//alert(campo + ": " + valor);
+							if (key == "id") { id = value; }
+							if (key == "name") { name = value; }
+														
+						});
+				         $("#payment_methods").append('<option value='+id+'>'+name+'</option>');		 
+
+                 }); 
+        }
+    });
+  });
+    $("#payment_methods").change(function(){
+    	$("#agenciesAttributes").show();
+    });
+
+    $(".mandatory").change(function(){
+    	if(document.getElementById('Latitude').value != "" && document.getElementById('Longitude').value != "" && document.getElementById('Radio').value != "") {
+ 			document.getElementById('sendbutton').disabled = false;
+    	}
+    });
+    $("#sendbutton").click(function(){
+    	$("#agenciesAttributes").hide();
+		var selectedCountry = $("#country").children("option:selected").val();
+		var selectedPayment = $("#payment_methods").children("option:selected").val();
+		var selectedLatitude = document.getElementById('Latitude').value ;
+		var selectedLongitude = document.getElementById('Longitude').value ;
+		var selectedRadio= document.getElementById('Radio').value ;
+		console.log("http://localhost:3000/sites/"+selectedCountry+"/payment_methods");
+		$("#payment_methods").val("");   
+		$.ajax({
+        url: "http://localhost:3000/sites/"+selectedCountry+"/payment_methods/" + selectedPayment + "/agencies?near_to=" + selectedLatitude+","
+        +selectedLongitude+","+selectedRadio,
+        type: "GET",
+        dataType: 'json',
+        success: function(result){
+            console.log(result);
+              $.each(result.results,function(key, registro) {
+	    			/*var address_line = "";
+	    		    var city = "";
+	    		    var country = "";
+	    		    var location = "";
+	    		    var other_info = "";
+	    		    var state = "";
+	    		    var zip_code = "";*/
+	    		    var agency_code = "";
+	    		    var correspondent_id = "";
+	    		    var description = "";
+	    		    var disabled = "";
+	    		    var id = "";
+	    		    var payment_method_id = "";
+	    		    var phone = "";
+	    		    var site_id = "";
+	    		    var terminal = "";
+
+						$.each(registro, function(key, value) {
+							//alert(campo + ": " + valor);
+							/*if (key == "address") { city = value.city; }
+						    if (key == "address") { country = value.country; }
+						    if (key == "address") { location = value.location; }
+						    if (key == "address") { other_info = value.other_info; }
+						    if (key == "address") { state = value.state; }
+						    if (key == "address") { zip_code = value.zip_code; }*/
+						    if (key == "agency_code") { agency_code = value; }
+						    if (key == "correspondent_id") { correspondent_id = value; }
+						    if (key == "description") { description = value; }
+						    if (key == "disabled") { disabled = value; }
+						    if (key == "id") { id = value; }
+						    if (key == "payment_method_id") { payment_method_id = value; }
+						    if (key == "phone") { phone = value; }
+						    if (key == "site_id") { site_id = value; }
+						    if (key == "terminal") { terminal = value; }
+							
+							
+						});
+						$('#mitabla contenido').append(/*'<tr><td>' + city + '</td><td>' + country + '</td><td>' + location + '</td><td>' + other_info + '</td><td>' + state + '</td><td>' + zip_code + */'</td><td>' + agency_code + '</td><td>' + correspondent_id + '</td><td>' + description + '</td><td>' + disabled + '</td><td>' + id + '</td><td>' + payment_method_id + '</td><td>' + phone + '</td><td>' + site_id + '</td><td>' + terminal + '</td></tr>');
+                 }); 
+        }
+    });
+  });
+
+});
+ </script>

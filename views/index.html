@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="selector-pais">
+    Country:
+    <select id="country"></select>
+    Payment methods
+    <select id="payment_methods"></select>
+    <button type="button" id="recommendedButton" class="btn btn-info">Agencias recomendadas</button>
+    <div id=agenciesAttributes>
+        <br>
+        Search near agencies
+        <br>
+        <input type="text" id="Latitude" class="form-control mandatory" style="width: 300px" name="msg"
+               placeholder="Latitude" autocomplete="off">
+        <br>
+        <input type="text" id="Longitude" class="form-control mandatory" style="width: 300px" name="msg"
+               placeholder="Longitude" autocomplete="off">
+        <br>
+        <input type="text" id="Radio" class="form-control mandatory" style="width: 300px" name="msg" placeholder="Radio"
+               autocomplete="off">
+        <br>
+        <input type="text" id="Limit" class="form-control" style="width: 300px" name="msg" placeholder="Limit"
+               autocomplete="off">
+        <br>
+        <input type="text" id="Offset" class="form-control" style="width: 300px" name="msg" placeholder="Offset"
+               autocomplete="off">
+        <br>
+        Order by
+        <form>
+            <div class="radio">
+                <label><input type="radio" name="optradio" value="address_line" checked>Address Line</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio" value="agency_code">Agency code</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="optradio" value="distance">Distance</label>
+            </div>
+        </form>
+        <button type="button" id="sendbutton" class="btn btn-info" disabled="true">Send</button>
+    </div>
+    <table id="mitabla" class="table table-striped">
+        <thead>
+        <tr>
+            <th colspan="10">Available agencies</th>
+        </tr>
+        <tr>
+            <th>Address line</th>
+            <th>City</th>
+            <th>Country</th>
+            <th>Location</th>
+            <th>State</th>
+            <th>Agency_code</th>
+            <th>Description</th>
+            <th>Distance</th>
+            <th>Id</th>
+            <th>Site id</th>
+            <th>Like/Dislike</th>
+        </tr>
+        </thead>
+        <tbody id="contenido">
+
+        </tbody>
+    </table>
+</body>
+</html>
+<script type="text/javascript">
+    $(document).ready(function () {
+        var api_url = 'http://localhost:3000/sites'
+        var key = '5b578yg9yvi8sogirbvegoiufg9v9g579gviuiub8' // not real
+        $("#agenciesAttributes").hide();
+        $.ajax({
+            url: api_url,
+            type: "GET",
+            dataType: 'json',
+            success: function (result) {
+                console.log(result);
+                $.each(result, function (key, registro) {
+                    var id = "";
+                    var name = "";
+
+                    $.each(registro, function (key, value) {
+                        //alert(campo + ": " + valor);
+                        if (key == "id") {
+                            id = value;
+                        }
+                        if (key == "name") {
+                            name = value;
+                        }
+
+                    });
+                    $("#country").append('<option value=' + id + '>' + name + '</option>');
+                });
+            }
+        });
+        $("#country").change(function () {
+            var selectedCountry = $("#country").children("option:selected").val();
+            $("#agenciesAttributes").hide();
+            $("#payment_methods").empty();
+            $.ajax({
+                url: "http://localhost:3000/sites/" + selectedCountry + "/payment_methods",
+                type: "GET",
+                dataType: 'json',
+                success: function (result) {
+                    console.log(result);
+                    $.each(result, function (key, registro) {
+                        var id = "";
+                        var name = "";
+
+                        $.each(registro, function (key, value) {
+                            //alert(campo + ": " + valor);
+                            if (key == "id") {
+                                id = value;
+                            }
+                            if (key == "name") {
+                                name = value;
+                            }
+
+                        });
+                        $("#payment_methods").append('<option value=' + id + '>' + name + '</option>');
+
+                    });
+                }
+            });
+        });
+        $("#payment_methods").change(function () {
+            $("#agenciesAttributes").show();
+        });
+
+        $(".mandatory").change(function () {
+            if (document.getElementById('Latitude').value != "" && document.getElementById('Longitude').value != "" && document.getElementById('Radio').value != "") {
+                document.getElementById('sendbutton').disabled = false;
+            }
+        });
+
+        $("#sendbutton").click(function () {
+            var selectedCountry = $("#country").children("option:selected").val();
+            var selectedPayment = $("#payment_methods").children("option:selected").val();
+            var selectedLatitude = document.getElementById('Latitude').value;
+            var selectedLongitude = document.getElementById('Longitude').value;
+            var selectedRadio = document.getElementById('Radio').value;
+            var selectedLimit = document.getElementById('Limit').value;
+            var selectedOffset = document.getElementById('Offset').value;
+            var selectedOrderBy = $("input[name='optradio']:checked").val();
+            $("#payment_methods").val("");
+            $.ajax({
+                url: "http://localhost:3000/sites/" + selectedCountry + "/payment_methods/" + selectedPayment + "/agencies?near_to=" + selectedLatitude + ","
+                    + selectedLongitude + "," + selectedRadio + "&limit=" + selectedLimit + "&offset=" + selectedOffset + "&sort_by=" +
+                    selectedOrderBy,
+                type: "GET",
+                dataType: 'json',
+                success: function (result) {
+                    console.log(result.results);
+                    //Table population
+                    var table = $('#mitabla');
+                    $.each(result.results, function (key, registro) {
+                        if (key == 0) {
+                            $("#mitabla").find("tr:gt(1)").remove();
+                        }
+                        var address_line = registro.address.address_line;
+                        var city = registro.address.city;
+                        var country = registro.address.country;
+                        var location = registro.address.location;
+                        var state = registro.address.state;
+                        var agency_code = registro.agency_code;
+                        var description = registro.description;
+                        var distance = registro.distance;
+                        var id = registro.id;
+                        var site_id = registro.site_id;
+                        table.append('<tr><td>' + address_line + '</td><td>' + city + '</td><td>' + country +
+                            '</td><td>' + location + '</td><td>' + state + '</td><td>' + agency_code + '</td><td>' + description +
+                            '</td><td>' + distance + '</td><td>' + id + '</td><td>' + site_id +
+                            '</td><td><button id="liked" class="glyphicon glyphicon-thumbs-up"></button> / <button id="disliked" class="glyphicon glyphicon-thumbs-down"></button></td></tr>');
+                    });
+                }
+            });
+        });
+
+        $("#recommendedButton").click(function () {
+            $.ajax({
+                url: "http://localhost:3000/agencies/",
+                type: "GET",
+                dataType: 'json',
+                success: function (result) {
+                    console.log("Te logueo")
+                    //Table population
+                    var table = $('#mitabla');
+                    $.each(result, function (key, registro) {
+                        if (key == 0) {
+                            $("#mitabla").find("tr:gt(1)").remove();
+                        }
+                        var address_line = registro.address_line;
+                        var city = registro.city;
+                        var country = registro.country;
+                        var location = registro.location;
+                        var state = registro.state;
+                        var agency_code = registro.agency_code;
+                        var description = registro.description;
+                        var distance = registro.distance;
+                        var id = registro.id;
+                        var site_id = registro.site;
+                        table.append('<tr><td>' + address_line + '</td><td>' + city + '</td><td>' + country +
+                            '</td><td>' + location + '</td><td>' + state + '</td><td>' + agency_code + '</td><td>' + description +
+                            '</td><td>' + distance + '</td><td>' + id + '</td><td>' + site_id +
+                            '</td></tr>');
+                    });
+                }
+            });
+        });
+
+        //Like button behavior
+        $(document).on('click', '#liked', function () {
+            console.log($(this).data("value"));
+            var address_line = $(this).parent().parent().find("td").eq(0).html();
+            var city = $(this).parent().parent().find("td").eq(1).html();
+            var country = $(this).parent().parent().find("td").eq(2).html();
+            var location = $(this).parent().parent().find("td").eq(3).html();
+            var state = $(this).parent().parent().find("td").eq(4).html();
+            var agency_code = $(this).parent().parent().find("td").eq(5).html();
+            var description = $(this).parent().parent().find("td").eq(6).html();
+            var distance = $(this).parent().parent().find("td").eq(7).html();
+            var id = $(this).parent().parent().find("td").eq(8).html();
+            var site_id = $(this).parent().parent().find("td").eq(9).html();
+            $.ajax({
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "address_line": address_line,
+                    "city": city,
+                    "country": country,
+                    "location": location,
+                    "state": state,
+                    "agency_code": agency_code,
+                    "description": description,
+                    "distance": distance,
+                    "id": id,
+                    "site": site_id
+                }),
+                dataType: 'json',
+                statusCode: {
+                    200: function () {
+                        alert("Agencia agregada correctamente");
+                    },
+                    304: function () {
+                        alert("La agencia ya existe en recomendadas");
+                    },
+                    default: function () {
+                        alert("Ocurrio un error al intentar eliminar la agencia")
+                    }
+                },
+                processData: false,
+                type: 'POST',
+                url: 'http://localhost:3000/agencies'
+            });
+
+        });
+
+        //Dislike button behavior
+        $(document).on('click', '#disliked', function () {
+            var agency_code = $(this).parent().parent().find("td").eq(8).html();
+            $.ajax({
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    "id": agency_code
+                }),
+                dataType: 'json',
+                statusCode: {
+                    200: function () {
+                        alert("Agencia eliminada correctamente");
+                    },
+                    304: function () {
+                        alert("La agencia no existe en recomendadas");
+                    },
+                    default: function () {
+                        alert("Ocurrio un error al intentar eliminar la agencia")
+                    }
+                },
+                processData: false,
+                type: 'DELETE',
+                url: 'http://localhost:3000/agencies'
+            });
+
+        });
+    });
+</script>

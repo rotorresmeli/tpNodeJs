@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+//To start the application run www file and then index.html file
 
 /**
  * Module dependencies.

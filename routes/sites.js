@@ -51,11 +51,29 @@ router.get('/:id/payment_methods/:payment_id/agencies', function (req, res) {
     var id = req.params.id
     var paymentId = req.params.payment_id
     var nearTo = req.query.near_to
+    if (nearTo != null) {
+        nearTo = "?near_to=" + nearTo
+    } else {
+        nearTo = ""
+    }
     var sort_by = req.query.sort_by
+    if (sort_by == null) {
+        sort_by = 'address_line'
+    }
     var limit = req.query.limit
+    if (limit != null) {
+        limit = "&limit=" + limit
+    } else {
+        limit = ""
+    }
     var offset = req.query.offset
+    if (offset != null) {
+        offset = "&offset=" + offset
+    } else {
+        offset = ""
+    }
     request.get("https://api.mercadolibre.com/sites/" +
-        id + "/payment_methods/" + paymentId + "/agencies?near_to=" + nearTo,
+        id + "/payment_methods/" + paymentId + "/agencies" + nearTo + limit + offset,
         function (error, response, body) {
             if (error) {
                 res.send(error);
@@ -88,9 +106,13 @@ router.get('/:id/payment_methods/:payment_id/agencies', function (req, res) {
 function createFileFromJson(jsonResponse) {
     var data = JSON.stringify(jsonResponse);
     var fs = require('fs');
-    fs.writeFile("file.json", data, function (err) {
+    fs.writeFile("Agencias.json", data, function (err) {
         if (err) console.log('error', err);
     });
 }
+
+router.post('/recomendedAgencies', function (req, res) {
+    req.body
+});
 
 module.exports = router;
